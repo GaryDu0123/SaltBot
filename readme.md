@@ -13,11 +13,11 @@ bash wechaty.sh
 
 2. 启动项目
 
-    linux
+    **linux**
     ```shell
     python3 run.py
     ```
-    windows
+    **windows**
     ```shell
     py run.py
     ```
