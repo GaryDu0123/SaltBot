@@ -32,7 +32,7 @@ class Service:
         """
         pass
 
-    def on_full_match(self, *word, only_to_me=False):
+    def on_prefix(self, *word, only_to_me=False):
         def registrar(func):
             @wraps(func)
             async def wrapper(conversation: Union[Room, Contact], msg: str):
@@ -53,3 +53,10 @@ class Service:
     def on_regex(self, regex: Union[str, re.Pattern], only_to_me=False):
         if isinstance(regex, str):
             regex = re.compile(regex)
+        raise NotImplementedError
+
+    def on_full_match(self, regex: Union[str, re.Pattern]):
+        raise NotImplementedError
+
+    def on_keyword(self, regex: Union[str, re.Pattern]):
+        raise NotImplementedError

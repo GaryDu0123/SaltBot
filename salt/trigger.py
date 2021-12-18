@@ -16,7 +16,7 @@ class Trigger:
         raise NotImplementedError
 
 
-# 全部匹配触发器
+# 前缀匹配触发器
 class PrefixTrigger(Trigger):
     def __init__(self):
         self.key_dict: Dict[str, List["ServiceFunc"]] = {}
@@ -47,20 +47,45 @@ class PrefixTrigger(Trigger):
         return ret
 
 
-# 正则匹配触发器
-class RegexTrigger:
+# 全部匹配触发器
+class FullTrigger(Trigger):
     def __init__(self):
         self.key_dict = {}
+
+    def add(self, prefix: str, func: "ServiceFunc"):
+        raise NotImplementedError
+
+    def is_match(self, msg: str) -> List["ServiceFunc"]:
+        raise NotImplementedError
+
+
+# 正则匹配触发器
+class RegexTrigger(Trigger):
+    def __init__(self):
+        self.key_dict = {}
+
+    def add(self, prefix: str, func: "ServiceFunc"):
+        raise NotImplementedError
+
+    def is_match(self, msg: str) -> List["ServiceFunc"]:
+        raise NotImplementedError
 
 
 # 关键词匹配触发器
-class KeywordTrigger:
+class KeywordTrigger(Trigger):
     def __init__(self):
         self.key_dict = {}
 
+    def add(self, prefix: str, func: "ServiceFunc"):
+        raise NotImplementedError
+
+    def is_match(self, msg: str) -> List["ServiceFunc"]:
+        raise NotImplementedError
+
 
 prefixTrigger = PrefixTrigger()
+fullTrigger = FullTrigger()
 regexTrigger = RegexTrigger()
 keywordTrigger = KeywordTrigger()
 
-handle_list: List["Trigger"] = [prefixTrigger] # , regexTrigger, keywordTrigger
+handle_list: List["Trigger"] = [prefixTrigger]  # ,fullTrigger, regexTrigger, keywordTrigger
