@@ -1,5 +1,4 @@
 import salt
-import salt.service as service
 from salt.service import Service
 from typing import Union
 from wechaty import Room, Contact
@@ -10,7 +9,7 @@ MANUAL = f"""
 功能清单
 Version: {salt.__version__}
 [复读] 复读所发送的文本
-
+[翻译] 翻译一些文字到中文 
 
 """.strip()
 

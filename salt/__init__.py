@@ -70,7 +70,7 @@ class SaltBot(Wechaty):
                 for handler in handle_list:
                     if len(text) == 0:
                         return
-                    ret = handler.is_match(text)  # 返回包含服务函数的列表
+                    ret = handler.search_handler(text)  # 返回包含服务函数的列表
                     if len(ret) > 0:
                         for sf in ret:
                             await sf.func(conversation, text)
