@@ -66,11 +66,11 @@ class SaltBot(Wechaty):
         # if not from_contact.is_self():
         for name in salt.config.BOT_NAME:
             if text.startswith(name):
+                text = text[len(name):]  # 切去前缀(bot名字)
                 for handler in handle_list:
-                    text = text[len(name):]  # 切去前缀
                     if len(text) == 0:
                         return
-                    ret = handler.is_match(text)
+                    ret = handler.is_match(text)  # 返回包含服务函数的列表
                     if len(ret) > 0:
                         for sf in ret:
                             await sf.func(conversation, text)
