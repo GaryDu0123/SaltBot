@@ -1,6 +1,8 @@
 """
 配置文件, 用于放置各种参数配置
 """
+BOT_NAME = ["salt", "盐"]
+
 
 WECHATY_PUPPET_SERVICE_TOKEN = "wechaty-puppet-wechat"
 WECHATY_TOKEN = "python-wechaty-97b5ee4f-f9bb-44d2-af1e-919b7d122539"

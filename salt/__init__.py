@@ -4,6 +4,8 @@ from wechaty_puppet import FileBox  # type: ignore
 
 from wechaty import Wechaty, Contact
 from wechaty.user import Message, Room
+
+import salt.config
 from salt import log
 from salt.trigger import handle_list
 from salt.config import modules_on
@@ -62,9 +64,17 @@ class SaltBot(Wechaty):
         """
         conversation: Union[Room, Contact] = from_contact if room is None else room
         # if not from_contact.is_self():
-        for handler in handle_list:
-            ret = handler.is_match(text)
-            if len(ret) > 0:
-                for sf in ret:
-                    await sf.func(conversation, text)
-                return
+        for name in salt.config.BOT_NAME:
+            if text.startswith(name):
+                for handler in handle_list:
+                    text = text[len(name):]  # 切去前缀
+                    if len(text) == 0:
+                        return
+                    ret = handler.is_match(text)
+                    if len(ret) > 0:
+                        for sf in ret:
+                            await sf.func(conversation, text)
+                        return
+                break
+
+
