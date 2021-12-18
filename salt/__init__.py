@@ -61,10 +61,10 @@ class SaltBot(Wechaty):
             # await conversation.say(file_box)
         """
         conversation: Union[Room, Contact] = from_contact if room is None else room
-        if not from_contact.is_self():
-            for handler in handle_list:
-                ret = handler.is_match(text)
-                if len(ret) > 0:
-                    for sf in ret:
-                        await sf.func(conversation, text)
-                    return
+        # if not from_contact.is_self():
+        for handler in handle_list:
+            ret = handler.is_match(text)
+            if len(ret) > 0:
+                for sf in ret:
+                    await sf.func(conversation, text)
+                return

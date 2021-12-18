@@ -12,4 +12,5 @@ res_dir = "D:\\Project\\SaltBot\\res"
 # 选择开启的模块
 modules_on = [
     "repeat",
+    "manage"
 ]

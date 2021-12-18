@@ -53,10 +53,19 @@ class FullTrigger(Trigger):
         self.key_dict = {}
 
     def add(self, prefix: str, func: "ServiceFunc"):
-        raise NotImplementedError
+        if prefix in self.key_dict:
+            self.key_dict[prefix].append(func)
+            salt.logger.warning(
+                f"Full match trigger `{prefix}` added multiple handlers: {func.__name__}@{func.service.name}")
+        else:
+            self.key_dict[prefix] = [func]
+            salt.logger.debug(f"Succeed to add full match trigger `{prefix}` to {func.__name__}@{func.service.name}")
 
     def is_match(self, msg: str) -> List["ServiceFunc"]:
-        raise NotImplementedError
+        ret = []
+        if msg in self.key_dict:
+            ret.extend(self.key_dict[msg])
+        return ret
 
 
 # 正则匹配触发器
@@ -83,9 +92,9 @@ class KeywordTrigger(Trigger):
         raise NotImplementedError
 
 
-prefixTrigger = PrefixTrigger()
 fullTrigger = FullTrigger()
+prefixTrigger = PrefixTrigger()
 regexTrigger = RegexTrigger()
 keywordTrigger = KeywordTrigger()
 
-handle_list: List["Trigger"] = [prefixTrigger]  # ,fullTrigger, regexTrigger, keywordTrigger
+handle_list: List["Trigger"] = [fullTrigger, prefixTrigger]  # , regexTrigger, keywordTrigger
