@@ -22,7 +22,7 @@ async def help_manual(conversation: Union[Room, Contact], msg: str):
 
 
 @sv.on_full_match("lssv", "帮助列表", "帮助清单")
-async def help_manual(conversation: Union[Room, Contact], msg: str):
+async def list_service(conversation: Union[Room, Contact], msg: str):
     message = "开启的服务为:\n" + "\n".join(Service.get_loaded_services())
     await conversation.ready()
     await conversation.say(message)
