@@ -131,4 +131,4 @@ prefixTrigger = PrefixTrigger()
 regexTrigger = RegexTrigger()
 keywordTrigger = KeywordTrigger()
 
-handle_list: List["Trigger"] = [fullTrigger, prefixTrigger, regexTrigger, keywordTrigger]  #
+handle_list: List["Trigger"] = [fullTrigger, prefixTrigger, regexTrigger, keywordTrigger]

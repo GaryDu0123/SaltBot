@@ -5,12 +5,12 @@
 """
 import os
 from wechaty import FileBox
+from salt.config import RES_DIR
 
 
 class Resource:
     def __init__(self, res_path):
-        from config import res_dir
-        res_dir = os.path.expanduser(res_dir)  # 处理linux目录下 "~" 等类型的路径
+        res_dir = os.path.expanduser(RES_DIR)  # 处理linux目录下 "~" 等类型的路径
         full_path = os.path.abspath(os.path.join(res_dir, res_path))
         self.__path = full_path
 

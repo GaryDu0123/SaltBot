@@ -1,17 +1,11 @@
-import salt
 from salt.service import Service
 from typing import Union
 from wechaty import Room, Contact
+from salt.config import MANUAL
 
-sv = Service('__help__')
+sv = Service('__help__', enable_on_default=True, visible=False)
 
-MANUAL = f"""
-功能清单
-Version: {salt.__version__}
-[复读] 复读所发送的文本
-[翻译] 翻译一些文字到中文 
-
-""".strip()
+MANUAL = MANUAL.strip()
 
 
 @sv.on_full_match("help", "帮助")
