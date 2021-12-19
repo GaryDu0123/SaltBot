@@ -1,3 +1,5 @@
+还没去问授权, 社团需要, 仿照hoshino的设计模式给社团写的
+
 项目以及构建设计来源自[hoshino](https://github.com/Ice-Cirno/HoshinoBot)
 
 基于Wechaty, 还未实现大部分功能, 仅供自我学习
