@@ -18,6 +18,29 @@ _config_dir = os.path.expanduser(f'{config.CONFIG_DIR}/service_config/'
                                  "~/.SaltBot/service_config/")
 
 
+def on_command(self, *word, only_to_me: bool = True):
+    """
+    系统级别的触发, 不需要新建服务对象, 阻止用户对系统级别的消息进行控制, todo 未完成
+    :return:
+    """
+    def registrar(func):
+        @wraps(func)
+        async def wrapper(conversation: Union[Room, Contact], msg: str):
+            # 此处可以加日志记录或者判断
+            return await func(conversation, msg)
+
+        # 在此处执行function(service)注册
+        sf = ServiceFunc(self, only_to_me, func)
+        for w in word:
+            if isinstance(w, str):
+                trigger.systemTrigger.add(w, sf)
+                self.logger.info(f"Success bind system trigger function {sf.__name__} to keyword {w} @{self.name}")
+            else:
+                self.logger.error(f'Failed to add system trigger `{w}`, expecting `str` but `{type(w)}` given!')
+        return wrapper
+    return registrar
+
+
 def _load_service_config(sv_name: str):
     config_path = os.path.join(_config_dir, f'{sv_name}.json')
     if not os.path.exists(config_path):
@@ -86,14 +109,6 @@ class Service:
     def get_loaded_services() -> Dict[str, "Service"]:
         return _loaded_service
 
-    @DeprecationWarning  # 待定
-    def on_message(self):
-        """
-        自由触发, 但是理论上要实现的功能和full_match一致, 感觉没必要实现
-        :return:
-        """
-        pass
-
     async def enable_service(self, room: "Room"):
         self.disabled_room.discard(room.room_id)
         self.enabled_room.add(room.room_id)
@@ -144,7 +159,6 @@ class Service:
                 else:
                     self.logger.error(f'Failed to add prefix trigger `{w}`, expecting `str` but `{type(w)}` given!')
             return wrapper
-
         return registrar
 
     def on_regex(self, *regex: Union[str, re.Pattern], only_to_me: bool = True):

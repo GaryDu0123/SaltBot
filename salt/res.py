@@ -1,6 +1,6 @@
 # coding = utf-8
 """
-
+用于封装和处理图像资源
 
 """
 import os

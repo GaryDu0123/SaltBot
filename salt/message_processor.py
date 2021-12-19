@@ -26,7 +26,6 @@ async def message_processor(msg: "Message"):
         ret = handler.search_handler(text)  # 寻找触发器
         if len(ret) > 0:
             for sf in ret:
-
                 # todo 检查群组权限
                 if not sf.service.check_service_enable(conversation.room_id):
                     continue

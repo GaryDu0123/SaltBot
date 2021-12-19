@@ -47,6 +47,27 @@ class PrefixTrigger(Trigger):
         return ret
 
 
+# 系统级别匹配触发器 todo
+class SystemTrigger(Trigger):
+    def __init__(self):
+        self.key_dict: Dict[str, List["ServiceFunc"]] = {}
+
+    def add(self, prefix: str, func: "ServiceFunc"):
+        if prefix in self.key_dict:
+            self.key_dict[prefix].append(func)
+            salt.logger.warning(
+                f"System trigger `{prefix}` added multiple handlers: {func.__name__}@{func.service.name}")
+        else:
+            self.key_dict[prefix] = [func]
+            salt.logger.debug(f"Succeed to add system trigger `{prefix}` to {func.__name__}@{func.service.name}")
+
+    def search_handler(self, msg: str) -> List["ServiceFunc"]:
+        ret = []
+        if msg in self.key_dict:
+            ret.extend(self.key_dict[msg])
+        return ret
+
+
 # 全部匹配触发器
 class FullTrigger(Trigger):
     def __init__(self):
@@ -126,9 +147,10 @@ class KeywordTrigger(Trigger):
         return ret
 
 
+systemTrigger = SystemTrigger()
 fullTrigger = FullTrigger()
 prefixTrigger = PrefixTrigger()
 regexTrigger = RegexTrigger()
 keywordTrigger = KeywordTrigger()
 
-handle_list: List["Trigger"] = [fullTrigger, prefixTrigger, regexTrigger, keywordTrigger]
+handle_list: List["Trigger"] = [systemTrigger, fullTrigger, prefixTrigger, regexTrigger, keywordTrigger]
