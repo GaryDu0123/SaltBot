@@ -12,7 +12,7 @@ WECHATY_PUPPET_SERVICE_ENDPOINT = 'localhost:8080'
 BOT_NAME = ["salt", "盐"]
 
 # Google Translate API
-# https://rapidapi.com/googlecloud/api/google-translate1/ 去这里申请
+# https://rapidapi.com 去这里申请
 GOOGLE_TRANSLATE_API_KEY = ""
 
 # 放置资源图片的`文件夹`
@@ -32,5 +32,10 @@ MANUAL = f"""
 Version: {__version__}
 [复读] 复读所发送的文本
 [翻译] 翻译一些文字到中文 
+[?nbnhhsh] 试试?能不能好好说话
 
+服务管理请发送 [开启|关闭 服务名]
+查看群开启的功能请使用 [服务列表]
+部分服务的使用需要加bot名使用, 比如
+{BOT_NAME[0]}复读 hello,world
 """

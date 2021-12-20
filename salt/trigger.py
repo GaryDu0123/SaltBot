@@ -47,7 +47,7 @@ class PrefixTrigger(Trigger):
         return ret
 
 
-# 系统级别匹配触发器 todo
+# 系统级别匹配触发器
 class SystemTrigger(Trigger):
     def __init__(self):
         self.key_dict: Dict[str, List["ServiceFunc"]] = {}
@@ -59,12 +59,13 @@ class SystemTrigger(Trigger):
                 f"System trigger `{prefix}` added multiple handlers: {func.__name__}@{func.service.name}")
         else:
             self.key_dict[prefix] = [func]
-            salt.logger.debug(f"Succeed to add system trigger `{prefix}` to {func.__name__}@{func.service.name}")
+            salt.logger.debug(f"Succeed to add system trigger `{prefix}`")
 
     def search_handler(self, msg: str) -> List["ServiceFunc"]:
         ret = []
-        if msg in self.key_dict:
-            ret.extend(self.key_dict[msg])
+        for k, v in self.key_dict.items():
+            if msg.startswith(k):
+                ret.extend(v)
         return ret
 
 

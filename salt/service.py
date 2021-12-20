@@ -17,28 +17,7 @@ _config_dir = os.path.expanduser(f'{config.CONFIG_DIR}/service_config/'
                                  if config.CONFIG_DIR is not None else
                                  "~/.SaltBot/service_config/")
 
-
-def on_command(self, *word, only_to_me: bool = True):
-    """
-    系统级别的触发, 不需要新建服务对象, 阻止用户对系统级别的消息进行控制, todo 未完成
-    :return:
-    """
-    def registrar(func):
-        @wraps(func)
-        async def wrapper(conversation: Union[Room, Contact], msg: str):
-            # 此处可以加日志记录或者判断
-            return await func(conversation, msg)
-
-        # 在此处执行function(service)注册
-        sf = ServiceFunc(self, only_to_me, func)
-        for w in word:
-            if isinstance(w, str):
-                trigger.systemTrigger.add(w, sf)
-                self.logger.info(f"Success bind system trigger function {sf.__name__} to keyword {w} @{self.name}")
-            else:
-                self.logger.error(f'Failed to add system trigger `{w}`, expecting `str` but `{type(w)}` given!')
-        return wrapper
-    return registrar
+os.makedirs(_config_dir, exist_ok=True)
 
 
 def _load_service_config(sv_name: str):
@@ -159,6 +138,7 @@ class Service:
                 else:
                     self.logger.error(f'Failed to add prefix trigger `{w}`, expecting `str` but `{type(w)}` given!')
             return wrapper
+
         return registrar
 
     def on_regex(self, *regex: Union[str, re.Pattern], only_to_me: bool = True):
