@@ -51,7 +51,7 @@ class SaltBot(Wechaty):
 
 def on_command(*word, only_to_me: bool = True):
     """
-    系统级别的触发, 不需要新建服务对象, 阻止用户对系统级别的消息进行控制, todo 未完成
+    系统级别的触发, 使用系统的对象, 阻止用户对系统级别的消息进行控制, todo 未完成
     :return:
     """
 

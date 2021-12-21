@@ -1,6 +1,7 @@
 import salt
 import os
 import re
+import apscheduler
 from functools import wraps
 from typing import Union, Dict, Callable, Set
 from wechaty import Room, Contact
@@ -200,3 +201,6 @@ class Service:
             return wrapper
 
         return registrar
+
+    def on_scheduler(self, *word, only_to_me: bool = False):
+        pass
