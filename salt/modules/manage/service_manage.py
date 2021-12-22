@@ -1,12 +1,13 @@
 from typing import Union
-from wechaty import Room, Contact
+from wechaty import Room, Contact, Message
 from salt import on_command
 from salt.service import _loaded_service
 import re
 
 
 @on_command("开启", "启用")
-async def enable_service(conversation: Union[Room, Contact], msg: str):
+async def enable_service(event: "Message", msg: str):
+    conversation: "Room" = event.room()
     command = re.match("^(开启|启用) *(?P<command>.+)", msg).group("command")
     for sv_name, sv in _loaded_service.items():
         if sv_name == command:
@@ -18,7 +19,8 @@ async def enable_service(conversation: Union[Room, Contact], msg: str):
 
 
 @on_command("关闭", "禁用")
-async def enable_service(conversation: Union[Room, Contact], msg: str):
+async def enable_service(event: "Message", msg: str):
+    conversation: "Room" = event.room()
     command = re.match("^(关闭|禁用) *(?P<command>.+)", msg).group("command")
     for sv_name, sv in _loaded_service.items():
         if sv_name == command:

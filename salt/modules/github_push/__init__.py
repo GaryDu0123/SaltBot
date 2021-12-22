@@ -2,7 +2,7 @@ import os
 import re
 from typing import Union
 
-from wechaty import Room, Contact
+from wechaty import Room, Contact, Message
 
 from salt import config
 from salt.service import Service, SchedulerTrigger
@@ -22,7 +22,8 @@ async def github_push():
 
 
 @sv.on_regex(re.compile("^github推送 *.*", re.I))
-async def github_set_up(conversation: Union[Room, Contact], msg: str):
+async def github_set_up(event: "Message", msg: str):
+    conversation: "Room" = event.room()
     message = re.match(re.compile("^github推送 *(?P<message>.*)", re.I), msg).group("message").strip()
 
     if message == "":

@@ -6,7 +6,7 @@ import re
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from functools import wraps
 from typing import Union, Dict, Callable, Set
-from wechaty import Room, Contact
+from wechaty import Room, Contact, Message
 from salt import priv
 from salt import trigger, log, config
 
@@ -113,20 +113,20 @@ class Service:
         _save_service_config(self)
         self.logger.info(f"Service {self.name} is disabled in Room {room_name}")
 
-    async def check_service_enable(self, conversation: Union[Room, Contact]) -> bool:  # todo
+    async def check_service_enable(self, event: "Message") -> bool:  # todo
         """
         返回true如果服务开启, false如果服务关闭
-        :param conversation: 会话
+        :param event:
         :return: 布尔值
         """
-        room_name = await conversation.topic()
+        room_name = await event.room().topic()
         return (room_name in self.enabled_room) or (self.enable_on_default and room_name not in self.disabled_room)
 
     @staticmethod
-    async def get_all_services_status(conversation: Union[Room, Contact]) -> Dict[str, bool]:
+    async def get_all_services_status(event: "Message") -> Dict[str, bool]:
         ret: Dict[str, bool] = {}
         for service in _loaded_service.values():
-            ret[service.name] = await service.check_service_enable(conversation)
+            ret[service.name] = await service.check_service_enable(event)
         return ret
 
     def on_prefix(self, *word, only_to_me: bool = True):
@@ -139,9 +139,9 @@ class Service:
 
         def registrar(func):
             @wraps(func)
-            async def wrapper(conversation: Union[Room, Contact], msg: str):
+            async def wrapper(event: "Message", msg: str):
                 # 此处可以加日志记录或者判断
-                return await func(conversation, msg)
+                return await func(event, msg)
 
             # 在此处执行function(service)注册
             sf = ServiceFunc(self, only_to_me, func)
@@ -158,8 +158,8 @@ class Service:
     def on_regex(self, *regex: Union[str, re.Pattern], only_to_me: bool = True):
         def registrar(func):
             @wraps(func)
-            async def wrapper(conversation: Union[Room, Contact], msg: str):
-                return await func(conversation, msg)
+            async def wrapper(event: "Message", msg: str):
+                return await func(event, msg)
 
             sf = ServiceFunc(self, only_to_me, func)
             for r in regex:
@@ -180,9 +180,9 @@ class Service:
     def on_full_match(self, *word, only_to_me: bool = True):
         def registrar(func):
             @wraps(func)
-            async def wrapper(conversation: Union[Room, Contact], msg: str):
+            async def wrapper(event: "Message", msg: str):
                 # 此处可以加日志记录或者判断
-                return await func(conversation, msg)
+                return await func(event, msg)
 
             # 在此处执行function(service)注册
             sf = ServiceFunc(self, only_to_me, func)
@@ -198,9 +198,9 @@ class Service:
 
     def on_keyword(self, *word, only_to_me: bool = False):
         def registrar(func):
-            async def wrapper(conversation: Union[Room, Contact], msg: str):
+            async def wrapper(event: "Message", msg: str):
                 # 此处可以加日志记录或者判断
-                return await func(conversation, msg)
+                return await func(event, msg)
                 # 在此处执行function(service)注册
 
             sf = ServiceFunc(self, only_to_me, func)

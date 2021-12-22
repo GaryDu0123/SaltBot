@@ -2,7 +2,7 @@ import re
 import aiohttp
 from salt.service import Service
 from typing import Union
-from wechaty import Room, Contact
+from wechaty import Room, Contact, Message
 from salt.config import GOOGLE_TRANSLATE_API_KEY
 from urllib.parse import quote
 
@@ -10,7 +10,8 @@ sv = Service("翻译", enable_on_default=True)
 
 
 @sv.on_prefix("翻译")
-async def translate(conversation: Union[Room, Contact], msg: str):
+async def translate(event: "Message", msg: str):
+    conversation: "Room" = event.room()
     url = "https://google-translate1.p.rapidapi.com/language/translate/v2"
     msg = re.match(r"^翻译 *(?P<message>.*)", msg)
     message = msg.group("message").strip()

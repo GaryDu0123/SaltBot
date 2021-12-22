@@ -57,9 +57,9 @@ def on_command(*word, only_to_me: bool = True):
 
     def registrar(func):
         @wraps(func)
-        async def wrapper(conversation: Union[Room, Contact], msg: str):
+        async def wrapper(event: "Message", msg: str):
             # 此处可以加日志记录或者判断
-            return await func(conversation, msg)
+            return await func(event, msg)
 
         # 在此处执行function(service)注册
         sf = ServiceFunc(system_sv, only_to_me, func)

@@ -29,14 +29,14 @@ async def message_processor(msg: "Message"):
                 # todo 检查群组权限
 
                 # 检查服务是否开启
-                if not (await sf.service.check_service_enable(conversation)):
+                if not (await sf.service.check_service_enable(msg)):
                     continue
                 # 命令必须@(叫名字)触发->{only_to_me == True || 是否@bot } not True or后面必须为True
                 # 命令不是必须叫名字   ->{only_to_me == False} 永真式
                 if not sf.only_to_me or message_to_me:
                     try:
                         sf.service.logger.info(f"Message {text} handled by {sf.__name__}")
-                        await sf.func(conversation, text)
+                        await sf.func(msg, text)
                     except Exception as e:
                         sf.service.logger.error(f"{type(e)} occurred when {sf.__name__} handling message {text}")
                         sf.service.logger.exception(e)
