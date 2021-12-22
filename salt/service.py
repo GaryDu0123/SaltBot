@@ -1,7 +1,9 @@
+from apscheduler.util import undefined
+
 import salt
 import os
 import re
-import apscheduler
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from functools import wraps
 from typing import Union, Dict, Callable, Set
 from wechaty import Room, Contact
@@ -19,6 +21,14 @@ _config_dir = os.path.expanduser(f'{config.CONFIG_DIR}/service_config/'
                                  "~/.SaltBot/service_config/")
 
 os.makedirs(_config_dir, exist_ok=True)
+
+scheduler = AsyncIOScheduler(timezone='Asia/Shanghai')
+
+
+class SchedulerTrigger:
+    DateTrigger = "date"
+    IntervalTrigger = "interval"
+    CronTrigger = "cron"
 
 
 def _load_service_config(sv_name: str):
@@ -90,30 +100,33 @@ class Service:
         return _loaded_service
 
     async def enable_service(self, room: "Room"):
-        self.disabled_room.discard(room.room_id)
-        self.enabled_room.add(room.room_id)
+        room_name = await room.topic()
+        self.disabled_room.discard(room_name)
+        self.enabled_room.add(room_name)
         _save_service_config(self)
-        self.logger.info(f"Service {self.name} is enabled in Room {await room.topic()}")
+        self.logger.info(f"Service {self.name} is enabled in Room {room_name}")
 
     async def disable_service(self, room: "Room"):
-        self.enabled_room.discard(room.room_id)
-        self.disabled_room.add(room.room_id)
+        room_name = await room.topic()
+        self.enabled_room.discard(room_name)
+        self.disabled_room.add(room_name)
         _save_service_config(self)
-        self.logger.info(f"Service {self.name} is disabled in Room {await room.topic()}")
+        self.logger.info(f"Service {self.name} is disabled in Room {room_name}")
 
-    def check_service_enable(self, room_id: str) -> bool:  # todo
+    async def check_service_enable(self, conversation: Union[Room, Contact]) -> bool:  # todo
         """
         返回true如果服务开启, false如果服务关闭
-        :param room_id: 群聊号码
+        :param conversation: 会话
         :return: 布尔值
         """
-        return (room_id in self.enabled_room) or (self.enable_on_default and room_id not in self.disabled_room)
+        room_name = await conversation.topic()
+        return (room_name in self.enabled_room) or (self.enable_on_default and room_name not in self.disabled_room)
 
     @staticmethod
-    def get_all_services_status(room_id: str) -> Dict[str, bool]:
+    async def get_all_services_status(conversation: Union[Room, Contact]) -> Dict[str, bool]:
         ret: Dict[str, bool] = {}
         for service in _loaded_service.values():
-            ret[service.name] = service.check_service_enable(room_id)
+            ret[service.name] = await service.check_service_enable(conversation)
         return ret
 
     def on_prefix(self, *word, only_to_me: bool = True):
@@ -202,5 +215,22 @@ class Service:
 
         return registrar
 
-    def on_scheduler(self, *word, only_to_me: bool = False):
-        pass
+    # todo 还未测试 是否有效
+    def on_scheduler(self, trigger_for_scheduler=SchedulerTrigger.CronTrigger,
+                     args=None, kwargs=None, id=None, name=None,
+                     misfire_grace_time=undefined, coalesce=undefined, max_instances=undefined,
+                     next_run_time=undefined, jobstore='default', executor='default',
+                     **trigger_args):
+        def registrar(func):
+            async def wrapper():
+                # 此处可以加日志记录或者判断
+                self.logger.info(f"Scheduler work {func.__name__} start")
+                ret = await func()
+                self.logger.info(f"Scheduler work {func.__name__} done")
+                return ret
+
+            scheduler.add_job(wrapper, trigger_for_scheduler, args, kwargs, id, name, misfire_grace_time,
+                              coalesce, max_instances, next_run_time, jobstore, executor, True, **trigger_args)
+            return wrapper
+
+        return registrar
