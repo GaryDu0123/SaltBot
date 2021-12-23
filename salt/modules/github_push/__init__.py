@@ -1,13 +1,13 @@
 import asyncio
 import os
 import re
+from collections import defaultdict
 
 import aiohttp
 from wechaty import Room, Message
-from typing import List
+from typing import List, Dict
 from salt import config
 from salt.service import Service, SchedulerTrigger
-
 
 try:
     import ujson as json
@@ -32,7 +32,7 @@ class GithubConfig:
         self.last_sha = None
 
 
-github_config_list: List[GithubConfig] = []
+github_config_list: Dict[str, List[GithubConfig]] = defaultdict(list)
 
 
 def _load_from_file():
@@ -41,14 +41,14 @@ def _load_from_file():
             json_config = json.load(f)
             for item in json_config:
                 try:
-                    github_config_list.append(
+                    github_config_list[item["service_room"]].append(
                         GithubConfig(item["rep_name"], item["service_room"], item["token"], item["enable"]))
                 except Exception as e:
                     sv.logger.warning(f"Error {e} occur when loading config {str(item)}")
     except FileNotFoundError as e:
         sv.logger.info(f"Not found the config file of {sv.__name__}")
     except Exception as e:
-        sv.logger.warning(f"Error {e} occur when loading config file @{sv.__name__}")
+        sv.logger.warning(f"Error {e} occur when loading config file @{sv.__name__}") # todo 有错误
 
 
 _load_from_file()  # 配置文件的内容只在初始化的时候读取
@@ -59,16 +59,16 @@ def _save_to_file():
     保存当前列表状态到config文档
     :return:
     """
-    temp = [
-        {
-            "rep_name": obj.rep_name,
-            "service_room": obj.service_room,
-            "token": obj.token,
-            "enable": obj.enable,
-            "last_sha": obj.last_sha
-        }
-        for obj in github_config_list
-    ]
+    temp = []
+    for service_room in github_config_list:
+        for obj in github_config_list[service_room]:
+            temp.append({
+                "rep_name": obj.rep_name,
+                "service_room": obj.service_room,
+                "token": obj.token,
+                "enable": obj.enable,
+                "last_sha": obj.last_sha
+            })
     with open(config_path, "w", encoding="utf-8") as f:
         json.dump(temp, f, indent=2, ensure_ascii=False)
 
@@ -93,37 +93,41 @@ async def github_request(obj: "GithubConfig"):
 
 # todo bug不能检查仓库名是否重复
 
-@sv.on_scheduler(SchedulerTrigger.IntervalTrigger, seconds=60)
+@sv.on_scheduler(SchedulerTrigger.IntervalTrigger, seconds=20)
 async def github_push():
     from salt import salt_bot
     is_changed = False  # 检测到有仓库更新后, 要求重新写入文件的标志
-    task = [asyncio.create_task(github_request(obj)) for obj in github_config_list]
+    task = []
+    for service_room in github_config_list:
+        for obj in github_config_list[service_room]:
+            task.append(asyncio.create_task(github_request(obj)))
     done, _ = await asyncio.wait(task, timeout=None)
     for d in done:
         respond = d.result()
         if len(respond) == 0:
             continue
-        for config_obj in github_config_list:
-            # 如果对象的服务房间与追溯的仓库名一致, 说明是正确的对象
-            if config_obj.service_room == respond["service_room"] and \
-                    config_obj.rep_name == respond["rep_name"]:
-                if config_obj.last_sha == respond["sha"]:  # 如果本次的sha值与原来的值一致, 说明没有更新, 断掉循环执行下个发送
-                    break
-                # 不等于sha的时候表示仓库更新了
-                is_changed = True  # 改变flag, 准备让后面重新写入
 
-                room = await salt_bot.Room.find(respond["service_room"])  # 获取room名字
-                if room is None:  # 如果获取不到房间
-                    sv.logger.warning(f"Cannot get room {config_obj.service_room}, skipped")
-                    continue
-                # await room.ready()  # 根据规定, 要求自动发送的时候要等待ready
-                await room.say(f"检测到{respond['rep_name']}仓库更新\n"
-                               f"提交者: {respond['author']['name']}\n"
-                               f"日期: {respond['author']['date']}\n"
-                               f"提交信息: {respond['message']}"
-                               )
-                config_obj.last_sha = respond["sha"]  # 更新记录的sha值
-                break  # 执行完毕准备执行下一个
+        for service_room in github_config_list:
+            # 如果对象的服务房间与追溯的仓库名一致, 说明是正确的对象
+            if service_room == respond["service_room"]:
+                for config_obj in github_config_list[service_room]:
+                    if config_obj.rep_name == respond["rep_name"]:
+                        if config_obj.last_sha == respond["sha"]:  # 如果本次的sha值与原来的值一致, 说明没有更新, 断掉循环执行下个发送
+                            break
+                        # 不等于sha的时候表示仓库更新了
+                        is_changed = True  # 改变flag, 准备让后面重新写入
+                        room = await salt_bot.Room.find(respond["service_room"])  # 获取room名字
+                        if room is None:  # 如果获取不到房间
+                            sv.logger.warning(f"Cannot get room {config_obj.service_room}, skipped")
+                            continue
+                        # await room.ready()  # 根据规定, 要求自动发送的时候要等待ready
+                        await room.say(f"检测到{respond['rep_name']}仓库更新\n"
+                                       f"提交者: {respond['author']['name']}\n"
+                                       f"日期: {respond['author']['date']}\n"
+                                       f"提交信息: {respond['message']}"
+                                       )
+                        config_obj.last_sha = respond["sha"]  # 更新记录的sha值
+                        break  # 执行完毕准备执行下一个
     if is_changed:
         _save_to_file()
 
