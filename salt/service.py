@@ -22,7 +22,13 @@ _config_dir = os.path.expanduser(f'{config.CONFIG_DIR}/service_config/'
 
 os.makedirs(_config_dir, exist_ok=True)
 
-scheduler = AsyncIOScheduler(timezone='Asia/Shanghai')
+
+class Scheduler(AsyncIOScheduler):
+    pass
+
+
+scheduler = Scheduler()  # timezone='Asia/Shanghai'
+scheduler.configure({'apscheduler.timezone': 'Asia/Shanghai'})
 
 
 class SchedulerTrigger:
@@ -215,12 +221,13 @@ class Service:
 
         return registrar
 
+    # trigger_for_scheduler = SchedulerTrigger.CronTrigger,
+    # args = None, kwargs = None, id = None, name = None,
+    # misfire_grace_time = undefined, coalesce = undefined, max_instances = undefined,
+    # next_run_time = undefined, jobstore = 'default', executor = 'default',
+    # ** trigger_args
     # todo 还未测试 是否有效
-    def on_scheduler(self, trigger_for_scheduler=SchedulerTrigger.CronTrigger,
-                     args=None, kwargs=None, id=None, name=None,
-                     misfire_grace_time=undefined, coalesce=undefined, max_instances=undefined,
-                     next_run_time=undefined, jobstore='default', executor='default',
-                     **trigger_args):
+    def on_scheduler(self, *args, **kwargs):
         def registrar(func):
             async def wrapper():
                 # 此处可以加日志记录或者判断
@@ -229,8 +236,10 @@ class Service:
                 self.logger.info(f"Scheduler work {func.__name__} done")
                 return ret
 
-            scheduler.add_job(wrapper, trigger_for_scheduler, args, kwargs, id, name, misfire_grace_time,
-                              coalesce, max_instances, next_run_time, jobstore, executor, True, **trigger_args)
+            # scheduler.add_job(wrapper, trigger_for_scheduler, args, kwargs, id, name, misfire_grace_time,
+            #                   coalesce, max_instances, next_run_time, jobstore, executor, True, **trigger_args)
+            scheduler.scheduled_job(*args, **kwargs)(wrapper)
+            self.logger.info(f"Scheduler successful add job {func.__name__}")
             return wrapper
 
         return registrar

@@ -9,7 +9,7 @@ os.environ['WECHATY_PUPPET_SERVICE_ENDPOINT'] = config.WECHATY_PUPPET_SERVICE_EN
 # os.environ['WECHATY_LOG'] = "silent"
 logger = log.new_logger('__run__', config.DEBUG)
 logger.info("Bot Start")
-asyncio.run(init().start())
+asyncio.get_event_loop().run_until_complete(init().start())
 
 # ################### 测试程序 #####################
 # import importlib

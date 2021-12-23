@@ -1,7 +1,7 @@
 __version__ = '0.0.1'
 
+
 from functools import wraps
-from typing import Union
 
 from wechaty_puppet import FileBox  # type: ignore
 from wechaty import Wechaty, Contact
@@ -9,11 +9,11 @@ from wechaty.user import Message, Room
 import salt.config
 from salt import log
 from salt.trigger import handle_list
-from salt.service import ServiceFunc, Service
+from salt.service import ServiceFunc, Service, scheduler
 from salt.config import MODULES_ON
 from salt.message_processor import message_processor
 import importlib
-
+salt_bot: "SaltBot"
 # from wechaty_plugin_contrib import (
 #     AutoReplyRule,
 #     AutoReplyPlugin,
@@ -33,19 +33,18 @@ def init() -> "SaltBot":
             logger.info(f'Succeeded to load modules "{modules}"')
         except ImportError:
             logger.warning(f"Load modules {modules} not successful")
-    return SaltBot()
+    global salt_bot
+    salt_bot = SaltBot()
+    scheduler.start()
+    return salt_bot
 
 
 class SaltBot(Wechaty):
+
     async def on_message(self, msg: Message):
         """
         listen for message event
         """
-        # file_box = FileBox.from_url(
-        #     'https://ss3.bdstatic.com/70cFv8Sh_Q1YnxGkpoWK1HF6hhy/it/'
-        #     'u=1116676390,2305043183&fm=26&gp=0.jpg',
-        #     name='ding-dong.jpg')
-        # await conversation.say(file_box)
         await message_processor(msg)
 
 
@@ -66,7 +65,8 @@ def on_command(*word, only_to_me: bool = True):
         for w in word:
             if isinstance(w, str):
                 trigger.systemTrigger.add(w, sf)
-                system_sv.logger.info(f"Success bind system trigger function {sf.__name__} to keyword {w} @{system_sv.name}")
+                system_sv.logger.info(
+                    f"Success bind system trigger function {sf.__name__} to keyword {w} @{system_sv.name}")
             else:
                 system_sv.logger.error(f'Failed to add system trigger `{w}`, expecting `str` but `{type(w)}` given!')
         return wrapper

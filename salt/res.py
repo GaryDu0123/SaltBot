@@ -15,5 +15,5 @@ class Resource:
         self.__path = full_path
 
     @property
-    def img(self, name=None):
+    def img(self, name: str = None):
         return FileBox.from_file(self.__path, name)
