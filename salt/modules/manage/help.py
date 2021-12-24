@@ -27,9 +27,9 @@ async def help_manual(event: "Message", msg: str):
 async def list_service(event: "Message", msg: str):
     conversation = event.room()
     message = "本群开启的服务为:\n"
-    sv_status = sorted(list((await Service.get_all_services_status(event)).items()),
+    sv_status = sorted(list((await Service.get_all_services_status(event, with_not_visible=False)).items()),
                        key=lambda x: x[1], reverse=True)
     sv.logger.info(sv_status)
     message += "\n".join([f"|{'○' if status else '×'}| {sv_name}" for sv_name, status in sv_status])
-    await conversation.ready()
+    # await conversation.ready()
     await conversation.say(message)

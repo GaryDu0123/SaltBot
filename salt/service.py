@@ -136,10 +136,11 @@ class Service:
         return (room_name in self.enabled_room) or (self.enable_on_default and room_name not in self.disabled_room)
 
     @staticmethod
-    async def get_all_services_status(event: "Message") -> Dict[str, bool]:
+    async def get_all_services_status(event: "Message", with_not_visible: bool = True) -> Dict[str, bool]:
         ret: Dict[str, bool] = {}
         for service in _loaded_service.values():
-            ret[service.name] = await service.check_service_enable(event)
+            if service.visible or with_not_visible:
+                ret[service.name] = await service.check_service_enable(event)
         return ret
 
     def on_prefix(self, *word, only_to_me: bool = True):
@@ -228,12 +229,7 @@ class Service:
 
         return registrar
 
-    # trigger_for_scheduler = SchedulerTrigger.CronTrigger,
-    # args = None, kwargs = None, id = None, name = None,
-    # misfire_grace_time = undefined, coalesce = undefined, max_instances = undefined,
-    # next_run_time = undefined, jobstore = 'default', executor = 'default',
-    # ** trigger_args
-    # todo 还未测试 是否有效
+
     def on_scheduler(self, *args, **kwargs):
         def registrar(func):
             async def wrapper():

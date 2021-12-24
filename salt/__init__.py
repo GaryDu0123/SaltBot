@@ -20,7 +20,7 @@ salt_bot: "SaltBot"
 #     AutoReplyOptions,
 # )
 logger = log.new_logger("salt_init")
-system_sv = Service("__system__", enable_on_default=True, visible=False)
+system_sv = Service("__system__", enable_on_default=True, visible=False, _help="系统运行服务, 这个帮助文字不应该出现")
 
 
 def init() -> "SaltBot":
@@ -33,9 +33,9 @@ def init() -> "SaltBot":
             logger.info(f'Succeeded to load modules "{modules}"')
         except ImportError:
             logger.warning(f"Load modules {modules} not successful")
-    global salt_bot
-    salt_bot = SaltBot()
-    scheduler.start()
+    global salt_bot  # 全局的变量方便后面调用Room查询
+    salt_bot = SaltBot()  # 初始化bot
+    scheduler.start()  # 开启日程调用
     return salt_bot
 
 

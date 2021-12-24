@@ -46,9 +46,9 @@ def _load_from_file():
                 except Exception as e:
                     sv.logger.warning(f"Error {e} occur when loading config {str(item)}")
     except FileNotFoundError as e:
-        sv.logger.info(f"Not found the config file of {sv.__name__}")
+        sv.logger.info(f"Not found the config file of {sv.name}")
     except Exception as e:
-        sv.logger.warning(f"Error {e} occur when loading config file @{sv.__name__}")  # todo 有错误
+        sv.logger.warning(f"Error {e} occur when loading config file @{sv.name}")
 
 
 _load_from_file()  # 配置文件的内容只在初始化的时候读取
@@ -292,7 +292,7 @@ async def github_set_up(event: "Message", msg: str):
 #     #         sv.logger.warning(f"Cannot get room {obj.service_room}, skipped")
 #     #         continue
 #     #
-#     #         # todo
+#     #
 #     #     sha = None
 #     #     if obj.last_sha != sha:
 #     #         obj.last_sha = sha
