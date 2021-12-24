@@ -13,7 +13,7 @@ sv = Service("能不能好好说话", enable_on_default=True,
 
 
 @sv.on_regex(re.compile(r"^[?？] *[a-z]+$"), only_to_me=False)
-async def test(event: "Message", msg: str):
+async def nbnhhsh(event: "Message", msg: str):
     conversation: "Room" = event.room()
     msg = re.match(r"^[?？] *(?P<message>[a-z]+)$", msg).group("message")
     try:

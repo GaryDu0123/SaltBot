@@ -76,7 +76,7 @@ def _save_to_file():
 async def github_request(obj: "GithubConfig"):
     try:
         async with aiohttp.request("GET",
-                                   headers={"Authorization": obj.token},
+                                   headers=({"Authorization": f"bearer {obj.token}"} if obj.token is not None else {}),
                                    url=f"https://api.github.com/repos/{obj.rep_name}/commits") as request:
             j = await request.json()
             return {
@@ -99,9 +99,10 @@ async def github_push():
     is_changed = False  # 检测到有仓库更新后, 要求重新写入文件的标志
     task = []
     for service_room in github_config_list:
-        if await sv.check_service_enable(service_room):
+        if await sv.check_service_enable(service_room):  # 检查是否开启服务
             for obj in github_config_list[service_room]:
-                task.append(asyncio.create_task(github_request(obj)))
+                if obj.enable:  # 检查是否开启此条配置的推送
+                    task.append(asyncio.create_task(github_request(obj)))
     if len(task) == 0:
         return  # 如果日程为0的话直接返回, 防止ValueError: Set of coroutines/Futures is empty.
     done, _ = await asyncio.wait(task, timeout=None)
@@ -136,13 +137,110 @@ async def github_push():
         _save_to_file()
 
 
-@sv.on_regex(re.compile("^github推送 *.*", re.I))
+# hard coding 了一下, 不打算改了
+
+@sv.on_regex(re.compile("^github推送 *添加 *.*$", re.I))
 async def github_set_up(event: "Message", msg: str):
-    conversation: "Room" = event.room()
-    message = re.match(re.compile("^github推送 *(?P<message>.*)", re.I), msg).group("message").strip()
+    room: "Room" = event.room()
+    room_name = await room.topic()
+    message = re.match(re.compile("^github推送 *添加 *(?P<message>.*)$", re.I), msg).group("message").strip()
 
     if message == "":
-        await conversation.say("添加推送请以[github推送 仓库名 TOKEN]的形式发送")
+        await room.say("添加推送请以[github推送 添加 账户名 仓库名 TOKEN]的形式发送, 中间以空格隔开")
+        return
+    match = re.match(r"^(?P<profile>\w+) +(?P<repo_name>\w+) *(?P<token>\w+)?$", message)
+    if match is None:
+        await room.say("格式不合法, 请重新添加")
+        return
+    config_file: dict = match.groupdict()
+    config_obj = GithubConfig(f"{config_file['profile']}/{config_file['repo_name']}",
+                              room_name,
+                              config_file['token'])
+    if len(await github_request(config_obj)) == 0:
+        sv.logger.info(f"{room_name} attempt to add configuration failed")
+        await room.say("添加失败, 配置不合法或者仓库提交为空")
+        return
+    for c in github_config_list[room_name]:
+        if c.rep_name == config_obj.rep_name:  # 检查是不是已经有该监测的仓库
+            c.token = config_obj.token  # 仓库有可能是token过期重新添加, 直接更新token
+            await room.say("监测的仓库已经存在, 已成功更新token")
+            _save_to_file()
+            return
+    github_config_list[room_name].append(config_obj)
+    _save_to_file()
+    await room.say("添加成功")
+
+
+@sv.on_regex(re.compile("^github推送 *删除 *.*$", re.I))
+async def github_delete_config(event: "Message", msg: str):
+    room: "Room" = event.room()
+    room_name = await room.topic()
+    message = re.match(re.compile("^github推送 *删除 *(?P<message>.*)$", re.I), msg).group("message").strip()
+    if message == "":
+        await room.say("删除推送设置请以[github推送 删除 账户名 仓库名]的形式发送, 中间以空格隔开")
+        return
+    match = re.match(r"^(?P<profile>\w+) +(?P<repo_name>\w+)$", message)
+    if match is None:
+        await room.say("格式不合法, 请重新发送")
+        return
+    config_file: dict = match.groupdict()
+    if room_name in github_config_list:
+        for config_obj in github_config_list[room_name]:
+            if config_obj.rep_name.lower() == f"{config_file['profile']}/{config_file['repo_name']}".lower():
+                github_config_list[room_name].remove(config_obj)
+                await room.say(f"已成功删除{config_obj.rep_name}")
+                sv.logger.info(f"{room_name} remove {config_obj.rep_name} push successfully")
+                _save_to_file()
+                return
+    await room.say(f"未找到{config_file['profile']}/{config_file['repo_name']}")
+    sv.logger.info(f"{room_name} remove {config_file['profile']}/{config_file['repo_name']} failed")
+
+
+@sv.on_regex(re.compile("^github推送 *(列表|all) *$", re.I))
+async def github_list_all(event: "Message", msg: str):
+    room: "Room" = event.room()
+    room_name = await room.topic()
+    if room_name in github_config_list:
+        temp = [
+            f"|{'○' if config_obj.enable else '×'}| {config_obj.rep_name}"
+            for config_obj in github_config_list[room_name]
+        ]
+        await room.say("\n".join(temp))
+        return
+    await room.say("未找到相关配置, 请再次添加或者联系Bot维护者")
+
+
+@sv.on_regex(re.compile("^github推送 *(开启|关闭) *.*$", re.I))
+async def github_open_close(event: "Message", msg: str):
+    room: "Room" = event.room()
+    room_name = await room.topic()
+    message = re.match(re.compile("^github推送 *(?P<status>(开启|关闭)) *(?P<message>.*)$", re.I), msg)
+    status = message.group("status")
+    message_config = message.group("message").strip()
+    if message == "":
+        await room.say("开启关闭推送请以[github推送 开启|关闭 账户名 仓库名]的形式发送, 中间以空格隔开")
+        return
+    match = re.match(r"^(?P<profile>\w+) +(?P<repo_name>\w+)$", message_config)
+    if match is None:
+        await room.say("格式不合法, 请重新发送")
+        return
+    config_file: dict = match.groupdict()
+    if room_name in github_config_list:
+        for config_obj in github_config_list[room_name]:
+            if config_obj.rep_name.lower() == f"{config_file['profile']}/{config_file['repo_name']}".lower():
+                if status == "开启":
+                    config_obj.enable = True
+                elif status == "关闭":
+                    config_obj.enable = False
+                else:
+                    sv.logger.error(f"Unknown status {status}")
+                    await room.say(f"未知错误, 出现了不应该出现的{status}, 请联系维护组")
+                    return
+                _save_to_file()
+                await room.say(f"已成功{status} {config_obj.rep_name}")
+                return
+    await room.say(f"未找到{config_file['profile']}/{config_file['repo_name']}")
+    sv.logger.info(f"{room_name} remove {config_file['profile']}/{config_file['repo_name']} failed")
 
 # class GithubConfig:
 #     def __init__(self, token: str = None, enable: bool = True, last_sha: str = None):
