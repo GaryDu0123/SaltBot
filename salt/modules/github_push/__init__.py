@@ -1,9 +1,8 @@
 import asyncio
 import os
 import re
-from collections import defaultdict
-
 import aiohttp
+from collections import defaultdict
 from wechaty import Room, Message
 from typing import List, Dict
 from salt import config
@@ -24,12 +23,12 @@ os.makedirs(_config_dir_git, exist_ok=True)
 
 
 class GithubConfig:
-    def __init__(self, rep_name, service_room: str, token: str = None, enable: bool = True):
+    def __init__(self, rep_name, service_room: str, token: str = None, enable: bool = True, last_sha: str = None):
         self.rep_name = rep_name
         self.service_room = service_room
         self.token = token
         self.enable = enable
-        self.last_sha = None
+        self.last_sha = last_sha
 
 
 github_config_list: Dict[str, List[GithubConfig]] = defaultdict(list)
@@ -42,13 +41,14 @@ def _load_from_file():
             for item in json_config:
                 try:
                     github_config_list[item["service_room"]].append(
-                        GithubConfig(item["rep_name"], item["service_room"], item["token"], item["enable"]))
+                        GithubConfig(item["rep_name"], item["service_room"], item["token"], item["enable"],
+                                     item["last_sha"]))
                 except Exception as e:
                     sv.logger.warning(f"Error {e} occur when loading config {str(item)}")
     except FileNotFoundError as e:
         sv.logger.info(f"Not found the config file of {sv.__name__}")
     except Exception as e:
-        sv.logger.warning(f"Error {e} occur when loading config file @{sv.__name__}") # todo 有错误
+        sv.logger.warning(f"Error {e} occur when loading config file @{sv.__name__}")  # todo 有错误
 
 
 _load_from_file()  # 配置文件的内容只在初始化的时候读取
@@ -93,14 +93,17 @@ async def github_request(obj: "GithubConfig"):
 
 # todo bug不能检查仓库名是否重复
 
-@sv.on_scheduler(SchedulerTrigger.IntervalTrigger, seconds=20)
+@sv.on_scheduler(SchedulerTrigger.IntervalTrigger, seconds=60)
 async def github_push():
     from salt import salt_bot
     is_changed = False  # 检测到有仓库更新后, 要求重新写入文件的标志
     task = []
     for service_room in github_config_list:
-        for obj in github_config_list[service_room]:
-            task.append(asyncio.create_task(github_request(obj)))
+        if await sv.check_service_enable(service_room):
+            for obj in github_config_list[service_room]:
+                task.append(asyncio.create_task(github_request(obj)))
+    if len(task) == 0:
+        return  # 如果日程为0的话直接返回, 防止ValueError: Set of coroutines/Futures is empty.
     done, _ = await asyncio.wait(task, timeout=None)
     for d in done:
         respond = d.result()
@@ -128,21 +131,9 @@ async def github_push():
                                        )
                         config_obj.last_sha = respond["sha"]  # 更新记录的sha值
                         break  # 执行完毕准备执行下一个
+            # todo done?
     if is_changed:
         _save_to_file()
-
-    # for obj in github_config_list:
-    #     room = await salt_bot.Room.find(obj.service_room)
-    #     if room is None:  # 如果获取不到房间
-    #         sv.logger.warning(f"Cannot get room {obj.service_room}, skipped")
-    #         continue
-    #
-    #         #
-    #     sha = None
-    #     if obj.last_sha != sha:
-    #         obj.last_sha = sha
-    #         return
-    #     print("一样的")
 
 
 @sv.on_regex(re.compile("^github推送 *.*", re.I))

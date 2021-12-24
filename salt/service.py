@@ -78,14 +78,16 @@ class ServiceFunc:
 
 class Service:
     def __init__(self,
-                 name: str,
-                 enable_on_default: bool = False,
-                 visible: bool = True,
-                 user_priv: int = priv.NORMAL,
-                 manage_priv: int = priv.ADMIN
+                 name: str,  # 服务名
+                 enable_on_default: bool = False,  # 是否默认开启
+                 visible: bool = True,  # 是否可见(系统级)
+                 user_priv: int = priv.NORMAL,  # 用户使用权限
+                 manage_priv: int = priv.ADMIN,  # 管理权限
+                 _help: str = ""  # 帮助文档
                  ):
         self.name = name
         self.logger = log.new_logger(name, config.DEBUG)
+        self.help = _help
 
         if self.name in _loaded_service:
             self.logger.critical(f"Duplicate service naming => {self.name}")
@@ -119,13 +121,18 @@ class Service:
         _save_service_config(self)
         self.logger.info(f"Service {self.name} is disabled in Room {room_name}")
 
-    async def check_service_enable(self, event: "Message") -> bool:  # todo
+    async def check_service_enable(self, event: Union["Message", str]) -> bool:  # todo
         """
         返回true如果服务开启, false如果服务关闭
         :param event:
         :return: 布尔值
         """
-        room_name = await event.room().topic()
+        if isinstance(event, Message):
+            room_name = await event.room().topic()
+        elif isinstance(event, str):
+            room_name = event
+        else:
+            return False
         return (room_name in self.enabled_room) or (self.enable_on_default and room_name not in self.disabled_room)
 
     @staticmethod

@@ -3,7 +3,13 @@ import re
 from salt.service import Service
 from wechaty import Message, Room
 
-sv = Service("能不能好好说话", enable_on_default=True)
+help_manual = """发送 [?不知道的拼音缩写]
+触发只接受英文字母
+比如 ?nbnhhsh -> 能不能好好说话
+"""
+
+sv = Service("能不能好好说话", enable_on_default=True,
+             _help=help_manual)
 
 
 @sv.on_regex(re.compile(r"^[?？] *[a-z]+$"), only_to_me=False)

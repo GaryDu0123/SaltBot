@@ -3,7 +3,7 @@ from wechaty import Room, Contact, Message
 from salt.service import Service
 from salt.res import Resource as R
 import random
-sv = Service("聊天", enable_on_default=True)
+sv = Service("聊天", enable_on_default=True, _help="日常聊天模块")
 
 
 @sv.on_full_match("不需要提示", only_to_me=False)
