@@ -19,10 +19,10 @@ _black_room_list: Dict["Room", str] = {}
 _black_user_list: Dict["Contact", str] = {}
 
 """用于存储所有管理权限的人"""
-_admin_user_dict: Dict[str: List["Contact"]] = defaultdict(list)
+_admin_user_dict: Dict[str, List["Contact"]] = defaultdict(list)
 
 """用于储存所有有群主权限的人"""
-_owner_user_dict: Dict[str: List["Contact"]] = defaultdict(list)
+_owner_user_dict: Dict[str, List["Contact"]] = defaultdict(list)
 
 
 def get_user_priv(event: "Message"):
