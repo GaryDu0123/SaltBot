@@ -7,10 +7,11 @@ from salt.config import BOT_NAME
 async def message_processor(msg: "Message"):
     talker: Optional[Contact] = msg.talker()  # 始终会返回说话者的对象
     room: Optional[Room] = msg.room()  # 私聊的时候这里为None
+
     if room is None:  # todo 暂时禁用私聊
         return
     # print(f"|{talker}|{room}|")
-    conversation: Union[Room, Contact] = talker if room is None else room
+    # conversation: Union[Room, Contact] = talker if room is None else room
     text: str = msg.text().strip()  # 获取到的信息
     if not text:  # 理论上不可能, 因为不允许发送空消息
         return

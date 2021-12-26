@@ -1,5 +1,3 @@
-from apscheduler.util import undefined
-
 import salt
 import os
 import re

@@ -93,7 +93,7 @@ async def github_request(obj: "GithubConfig"):
 
 # todo bug不能检查仓库名是否重复
 
-@sv.on_scheduler(SchedulerTrigger.IntervalTrigger, seconds=60)
+@sv.on_scheduler(SchedulerTrigger.IntervalTrigger, seconds=180)
 async def github_push():
     from salt import salt_bot
     is_changed = False  # 检测到有仓库更新后, 要求重新写入文件的标志
