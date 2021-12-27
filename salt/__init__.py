@@ -1,9 +1,9 @@
 __version__ = '0.0.1'
 
-
+import asyncio
 from functools import wraps
 
-from wechaty_puppet import FileBox  # type: ignore
+from wechaty_puppet import FileBox, ContactQueryFilter, EventReadyPayload  # type: ignore
 from wechaty import Wechaty, Contact
 from wechaty.user import Message, Room
 import salt.config
@@ -13,6 +13,7 @@ from salt.service import ServiceFunc, Service, scheduler
 from salt.config import MODULES_ON
 from salt.message_processor import message_processor
 import importlib
+
 salt_bot: "SaltBot"
 # from wechaty_plugin_contrib import (
 #     AutoReplyRule,
@@ -40,6 +41,16 @@ def init() -> "SaltBot":
 
 
 class SaltBot(Wechaty):
+
+    # async def on_ready(self, payload: EventReadyPayload) -> None:
+    #     contacts = self.Contact.find_all()
+    #     con = await self.Contact.find("佳佳姐姐")
+    #     print(con)
+
+    async def on_login(self, contact: Contact) -> None:
+        await asyncio.sleep(5)
+        from salt.priv import refresh_superuser_list
+        await refresh_superuser_list(self)
 
     async def on_message(self, msg: Message):
         """

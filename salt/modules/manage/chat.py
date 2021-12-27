@@ -23,3 +23,11 @@ async def yysy(event: "Message", msg: str):
     conversation: Union[Room, Contact] = event.room()
     if random.random() < 0.10:
         await conversation.say(R("img/确实.jpg").img)
+
+
+@sv.on_full_match("获取头像")
+async def get_a(event: "Message", msg: str):
+    room = event.room()
+    talker = event.talker()
+    file = await talker.avatar()
+    await file.to_file(f"./res/test/{file.name}", True)

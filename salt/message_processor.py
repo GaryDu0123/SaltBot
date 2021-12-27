@@ -7,7 +7,7 @@ from salt.config import BOT_NAME
 async def message_processor(msg: "Message"):
     talker: Optional[Contact] = msg.talker()  # 始终会返回说话者的对象
     room: Optional[Room] = msg.room()  # 私聊的时候这里为None
-
+    # print(room.member_list())
     if room is None:  # todo 暂时禁用私聊
         return
     # print(f"|{talker}|{room}|")
