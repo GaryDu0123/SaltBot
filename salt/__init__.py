@@ -49,8 +49,8 @@ class SaltBot(Wechaty):
 
     async def on_login(self, contact: Contact) -> None:
         await asyncio.sleep(5)
-        from salt.priv import refresh_superuser_list
-        await refresh_superuser_list(self)
+        from salt.priv import refresh_all
+        await refresh_all(self)
 
     async def on_message(self, msg: Message):
         """
