@@ -4,7 +4,10 @@
 
 ## 设计
 
-[![Powered by Wechaty](https://img.shields.io/badge/Powered%20By-Wechaty-brightgreen.svg)](https://wechaty.js.org) [![Python 3.8+](https://img.shields.io/badge/Python-3.8%2B-blue)](https://www.python.org/downloads/) [![GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-orange)](https://github.com/GaryDu0123/SaltBot/blob/master/LICENSE)
+[![Powered by Wechaty](https://img.shields.io/badge/Powered%20By-Wechaty-brightgreen.svg)](https://wechaty.js.org) 
+[![Python 3.8+](https://img.shields.io/badge/Python-3.8%2B-blue)](https://www.python.org/downloads/) 
+[![GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-orange)](https://github.com/GaryDu0123/SaltBot/blob/master/LICENSE)
+[![Hoshino](https://img.shields.io/badge/ProjectDesign-Hoshino-000066)](https://github.com/Ice-Cirno/HoshinoBot)
 
 项目构建设计思路来源自[HoshinoBot](https://github.com/Ice-Cirno/HoshinoBot), 使用wechaty作为载体进行设计重写
 
