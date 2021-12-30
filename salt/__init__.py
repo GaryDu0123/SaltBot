@@ -5,14 +5,16 @@ from functools import wraps
 
 from wechaty_puppet import FileBox, ContactQueryFilter, EventReadyPayload  # type: ignore
 from wechaty import Wechaty, Contact
-from wechaty.user import Message, Room
+from wechaty.user import Message
 import salt.config
 from salt import log
 from salt.trigger import handle_list
 from salt.service import ServiceFunc, Service, scheduler
 from salt.config import MODULES_ON
 from salt.message_processor import message_processor
+from salt.utils import init_utils
 import importlib
+
 
 salt_bot: "SaltBot"
 # from wechaty_plugin_contrib import (
@@ -25,6 +27,7 @@ system_sv = Service("__system__", enable_on_default=True, visible=False, _help="
 
 
 def init() -> "SaltBot":
+    init_utils()
     for modules in MODULES_ON:
         """
         将modules_on(模块)文件夹内的所有py都进行导入

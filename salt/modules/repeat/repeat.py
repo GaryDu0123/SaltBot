@@ -9,6 +9,7 @@ sv = Service("复读", _help=f"发送 [{config.BOT_NAME[0]}复读 需要复读�
 
 @sv.on_prefix("复读")
 async def repeat(event: "Message", msg: str):
+    print(msg)
     conversation: "Room" = event.room()
     msg = re.match(r"^复读(?P<message>.*)", msg)
     message = msg.group("message").strip()
