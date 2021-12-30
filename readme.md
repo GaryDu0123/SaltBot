@@ -344,8 +344,9 @@ Room对象里面有`say(some_thing: Union[str, Contact, FileBox, MiniProgram, Ur
 - [x] 插件管理
 - [x] 消息触发
 - [x] 帮助列表扩展, 分模块的详细帮助
+- [x] 对say的方法进行封装, 发送消息时对敏感词进行筛选
 - [ ] 权限控制
-- [ ] 对say的方法进行封装, 发送消息时对敏感词进行筛选
+
 
 
 
