@@ -8,7 +8,7 @@
 
 项目构建设计思路来源自[HoshinoBot](https://github.com/Ice-Cirno/HoshinoBot), 使用wechaty作为载体进行设计重写
 
-社团需要, 非面向pcr玩家, 个人非常喜欢hoshino的生态~yyds~
+社团需要, 非面向pcr玩家, 个人非常喜欢hoshino的生态, yyds~
 
 ## 安装
 
