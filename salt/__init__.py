@@ -13,17 +13,14 @@ from salt.service import ServiceFunc, Service, scheduler
 from salt.config import MODULES_ON
 from salt.message_processor import message_processor
 from salt.utils import init_utils
+import salt.priv as priv
 import importlib
 
 
 salt_bot: "SaltBot"
-# from wechaty_plugin_contrib import (
-#     AutoReplyRule,
-#     AutoReplyPlugin,
-#     AutoReplyOptions,
-# )
 logger = log.new_logger("salt_init")
-system_sv = Service("__system__", enable_on_default=True, visible=False, _help="系统运行服务, 这个帮助文字不应该出现")
+system_sv = Service("__system__", enable_on_default=True, visible=False, _help="系统运行服务, 这个帮助文字不应该出现",
+                    manage_priv=priv.ADMIN)
 
 
 def init() -> "SaltBot":
@@ -44,11 +41,6 @@ def init() -> "SaltBot":
 
 
 class SaltBot(Wechaty):
-
-    # async def on_ready(self, payload: EventReadyPayload) -> None:
-    #     contacts = self.Contact.find_all()
-    #     con = await self.Contact.find("佳佳姐姐")
-    #     print(con)
 
     async def on_login(self, contact: Contact) -> None:
         await asyncio.sleep(5)

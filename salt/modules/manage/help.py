@@ -16,7 +16,7 @@ async def help_manual(event: "Message", msg: str):
         # await conversation.ready()
         await conversation.say(MANUAL)
         return
-    if service_name in Service.get_loaded_services():  # todo 检查权限
+    if service_name in Service.get_loaded_services() and Service.get_loaded_services()[service_name].visible:
         help_text = Service.get_loaded_services()[service_name].help.strip()
         await conversation.say(f"帮助: {service_name}\n{help_text}")
         return

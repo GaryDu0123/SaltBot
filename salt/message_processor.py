@@ -31,7 +31,7 @@ async def message_processor(msg: "Message"):
                 # todo 检查群组权限
 
                 # 检查服务是否开启
-                if not (await sf.service.check_service_enable(msg)):
+                if not (await sf.service.check_all_user_priv(msg)):
                     continue
                 # 命令必须@(叫名字)触发->{only_to_me == True || 是否@bot } not True or后面必须为True
                 # 命令不是必须叫名字   ->{only_to_me == False} 永真式

@@ -7,6 +7,7 @@ from typing import Union, Dict, Callable, Set
 from wechaty import Room, Contact, Message
 from salt import priv
 from salt import trigger, log, config
+from priv import check_is_block_room, check_is_block_user, get_user_priv, check_priv
 
 try:
     import ujson as json
@@ -119,6 +120,12 @@ class Service:
         _save_service_config(self)
         self.logger.info(f"Service {self.name} is disabled in Room {room_name}")
 
+    def check_user_priv(self, event: "Message") -> bool:
+        return check_priv(get_user_priv(event), self.user_priv)
+
+    def check_admin_priv(self, event: "Message") -> bool:
+        return check_priv(get_user_priv(event), self.manage_priv)
+
     async def check_service_enable(self, event: Union["Message", str]) -> bool:  # todo
         """
         返回true如果服务开启, false如果服务关闭
@@ -132,6 +139,10 @@ class Service:
         else:
             return False
         return (room_name in self.enabled_room) or (self.enable_on_default and room_name not in self.disabled_room)
+
+    async def check_all_user_priv(self, event: "Message"):
+        return self.check_user_priv(event) and not check_is_block_user(event.talker()) and \
+               not check_is_block_room(event.room()) and await self.check_service_enable(event)
 
     @staticmethod
     async def get_all_services_status(event: "Message", with_not_visible: bool = True) -> Dict[str, bool]:
@@ -210,6 +221,7 @@ class Service:
 
     def on_keyword(self, *word, only_to_me: bool = False):
         def registrar(func):
+            @wraps(func)
             async def wrapper(event: "Message", msg: str):
                 # 此处可以加日志记录或者判断
                 return await func(event, msg)
@@ -227,9 +239,9 @@ class Service:
 
         return registrar
 
-
     def on_scheduler(self, *args, **kwargs):
         def registrar(func):
+            @wraps(func)
             async def wrapper():
                 # 此处可以加日志记录或者判断
                 self.logger.info(f"Scheduler work {func.__name__} start")

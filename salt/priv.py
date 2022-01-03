@@ -5,15 +5,15 @@
 from typing import Dict, List
 from wechaty import Message, Contact, Room
 from collections import defaultdict
-
+from datetime import timedelta, datetime
 from wechaty_puppet import ContactQueryFilter
 
 from salt.config import SUPER_USER_LIST
 
 BLACK = -999
+PRIVATE = -10
 DEFAULT = 0
 NORMAL = 1
-PRIVATE = 10
 ADMIN = 21
 OWNER = 22
 WHITE = 51
@@ -23,10 +23,10 @@ SUPERUSER = 999
 _superuser_list: List["Contact"] = []
 
 """存放黑名单群聊"""
-_black_room_dict: Dict["Room", str] = {}
+_black_room_dict: Dict["Room", "datetime"] = {}
 
 """存放黑名单用户"""
-_black_user_dict: Dict["Contact", str] = {}
+_black_user_dict: Dict["Contact", "datetime"] = {}
 
 """用于存储所有管理权限的人, 储存方式为 [room对象: 管理员列表] 因为web版不具备获取群管理的能力, 所以必须每个群手动添加"""
 _admin_user_dict: Dict["Room", List["Contact"]] = defaultdict(list)
@@ -43,12 +43,12 @@ async def refresh_all(bot):
     _superuser_list.clear()
 
     for name in SUPER_USER_LIST:
-        sp_user = await bot.Contact.find(ContactQueryFilter(name=name))
+        sp_user = await bot.Contact.find(ContactQueryFilter(name=name))  # todo 还不确定这里到底应该做什么权限处理
         if sp_user not in _superuser_list:
             _superuser_list.append(sp_user)
 
 
-async def get_user_priv(event: "Message") -> int:
+def get_user_priv(event: "Message") -> int:
     talker: "Contact" = event.talker()
     room: "Room" = event.room()
     if talker in _superuser_list:  # 在超级管理员字典中返回SUPERUSER
@@ -62,3 +62,33 @@ async def get_user_priv(event: "Message") -> int:
     elif room is None:  # 没有房间对象表示为私聊消息
         return PRIVATE
     return NORMAL
+
+
+def set_block_room(room: "Room", block_time: "timedelta"):
+    _black_room_dict[room] = datetime.now() + block_time
+
+
+def set_block_user(contact: "Contact", block_time: "timedelta"):
+    _black_user_dict[contact] = datetime.now() + block_time
+
+
+def check_is_block_user(contact: "Contact"):
+    if contact in _black_user_dict:
+        if datetime.now() > _black_user_dict[contact]:  # 如果现在的时间大于拉黑时间, 删除拉黑记录
+            del _black_user_dict[contact]
+            return False  # 返回该用户不是被拉黑的
+        return True  # True表示被拉黑
+    return False
+
+
+def check_is_block_room(room: "Room"):
+    if room in _black_room_dict:
+        if datetime.now() > _black_room_dict[room]:
+            del _black_room_dict[room]
+            return False
+        return True
+    return False
+
+
+def check_priv(user_priv: int, need_priv: int):
+    return user_priv >= need_priv
