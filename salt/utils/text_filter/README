@@ -1,0 +1,15 @@
+引用: https://github.com/observerss/textfilter
+加了个增强函数, 用于匹配类似于`法 轮 功`这种中间带有空格或者特殊字符的消息, 只对DFA做了改动
+
+原文:
+很短但是觉得挺有用的东东
+所以单独立了个项目备份一下
+
+USAGE:
+
+    >>> f = DFAFilter()
+    >>> f.add("sexy")
+    >>> f.filter("hello sexy baby")
+    hello **** baby
+
+
