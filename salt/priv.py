@@ -42,17 +42,25 @@ async def refresh_all(bot):
     _black_room_dict.clear()
     _superuser_list.clear()
 
-    for name in SUPER_USER_LIST:
-        sp_user = await bot.Contact.find(ContactQueryFilter(name=name))  # todo 还不确定这里到底应该做什么权限处理
+    for uid in SUPER_USER_LIST:
+        sp_user = await bot.Contact.find(ContactQueryFilter(id=uid))  # todo 还不确定这里到底应该做什么权限处理
+        from . import system_sv
+        if sp_user is None:
+            system_sv.logger.critical(f"Could not load the SUPERUSER {uid}: User not found")
+            system_sv.logger.critical(f"警告: 无法载入超级用户 {uid}, 请检查该人id是否正确且为Bot好友")
+            continue
         if sp_user not in _superuser_list:
             _superuser_list.append(sp_user)
+            system_sv.logger.info(f"Successful load SUPERUSER {uid}")
 
 
-def get_user_priv(event: "Message") -> int:
+async def get_user_priv(event: "Message") -> int:
     talker: "Contact" = event.talker()
     room: "Room" = event.room()
     if talker in _superuser_list:  # 在超级管理员字典中返回SUPERUSER
         return SUPERUSER
+    elif await event.room().owner() == talker:
+        return OWNER
     elif room is not None and talker in _admin_user_dict[room]:  # 考虑到可能为私聊, 判断一下room是不是为None, 然后判断一下管理员组
         return ADMIN
     elif talker in _black_user_dict:  # 如果user对象在黑名单中, 返回BLACK

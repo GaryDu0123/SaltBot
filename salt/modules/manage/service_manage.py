@@ -9,7 +9,7 @@ import re
 @on_command("开启", "启用")
 async def enable_service(event: "Message", msg: str):
     conversation: "Room" = event.room()
-    user_priv = get_user_priv(event)
+    user_priv = await get_user_priv(event)
     if check_priv(user_priv, priv.ADMIN):
         command = re.match("^(开启|启用) *(?P<command>.+)", msg).group("command")
         for sv_name, sv in _loaded_service.items():
@@ -26,7 +26,7 @@ async def enable_service(event: "Message", msg: str):
 @on_command("关闭", "禁用")
 async def enable_service(event: "Message", msg: str):
     conversation: "Room" = event.room()
-    user_priv = get_user_priv(event)
+    user_priv = await get_user_priv(event)
     if check_priv(user_priv, priv.ADMIN):
         command = re.match("^(关闭|禁用) *(?P<command>.+)", msg).group("command")
         for sv_name, sv in _loaded_service.items():

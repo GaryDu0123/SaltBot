@@ -7,7 +7,7 @@ from typing import Union, Dict, Callable, Set
 from wechaty import Room, Contact, Message
 from salt import priv
 from salt import trigger, log, config
-from priv import check_is_block_room, check_is_block_user, get_user_priv, check_priv
+from .priv import check_is_block_room, check_is_block_user, get_user_priv, check_priv
 
 try:
     import ujson as json
@@ -120,11 +120,11 @@ class Service:
         _save_service_config(self)
         self.logger.info(f"Service {self.name} is disabled in Room {room_name}")
 
-    def check_user_priv(self, event: "Message") -> bool:
-        return check_priv(get_user_priv(event), self.user_priv)
+    async def check_user_priv(self, event: "Message") -> bool:
+        return check_priv(await get_user_priv(event), self.user_priv)
 
-    def check_admin_priv(self, event: "Message") -> bool:
-        return check_priv(get_user_priv(event), self.manage_priv)
+    async def check_admin_priv(self, event: "Message") -> bool:
+        return check_priv(await get_user_priv(event), self.manage_priv)
 
     async def check_service_enable(self, event: Union["Message", str]) -> bool:  # todo
         """
@@ -141,7 +141,7 @@ class Service:
         return (room_name in self.enabled_room) or (self.enable_on_default and room_name not in self.disabled_room)
 
     async def check_all_user_priv(self, event: "Message"):
-        return self.check_user_priv(event) and not check_is_block_user(event.talker()) and \
+        return await self.check_user_priv(event) and not check_is_block_user(event.talker()) and \
                not check_is_block_room(event.room()) and await self.check_service_enable(event)
 
     @staticmethod

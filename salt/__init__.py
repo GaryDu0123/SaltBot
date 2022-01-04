@@ -43,8 +43,13 @@ def init() -> "SaltBot":
 class SaltBot(Wechaty):
 
     async def on_login(self, contact: Contact) -> None:
-        await asyncio.sleep(5)
+        pass
+        # from salt.priv import refresh_all
+        # await refresh_all(self)
+
+    async def on_ready(self, payload: EventReadyPayload) -> None:
         from salt.priv import refresh_all
+        # await asyncio.sleep(5)
         await refresh_all(self)
 
     async def on_message(self, msg: Message):

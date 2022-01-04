@@ -7,15 +7,25 @@ from salt.utils.text_cleaner import clean_text
 
 async def message_processor(msg: "Message"):
     talker: Optional[Contact] = msg.talker()  # 始终会返回说话者的对象
+    # print(talker.name)
+    # print(talker.weixin())
+    # print(talker.contact_id)
+    # print(await talker.alias())
     room: Optional[Room] = msg.room()  # 私聊的时候这里为None
-    # print(room.member_list())
-    if room is None:  # todo 暂时禁用私聊
-        return
-    # print(f"|{talker}|{room}|")
-    # conversation: Union[Room, Contact] = talker if room is None else room
-    text: str = clean_text(msg.text()).strip()  # 获取到的信息并清洗
+    # for person in await room.member_list():
+    #     print(person.contact_id ,"-", person.weixin(), "-",person.name,"-", await person.alias())
+    text: str = msg.text()  # 获取到信息
+
+    is_mention_self = False
+    if await msg.mention_self():
+        bot_room_name = await room.alias(msg.wechaty)
+        text.replace(f"@{bot_room_name}", "")
+        is_mention_self = True
+
+    text = clean_text(text).strip()
     if not text:  # 理论上不可能, 因为不允许发送空消息
         return
+    print(text)
     message_to_me = False  # 检查是不是叫了名字
     for name in BOT_NAME:
         if text.startswith(name):
@@ -28,14 +38,12 @@ async def message_processor(msg: "Message"):
         ret = handler.search_handler(text)  # 寻找触发器
         if len(ret) > 0:
             for sf in ret:
-                # todo 检查群组权限
-
                 # 检查服务是否开启
                 if not (await sf.service.check_all_user_priv(msg)):
                     continue
                 # 命令必须@(叫名字)触发->{only_to_me == True || 是否@bot } not True or后面必须为True
                 # 命令不是必须叫名字   ->{only_to_me == False} 永真式
-                if not sf.only_to_me or message_to_me:
+                if not sf.only_to_me or message_to_me or is_mention_self:
                     try:
                         sf.service.logger.info(f"Message {text} handled by {sf.__name__}")
                         await sf.func(msg, text)
