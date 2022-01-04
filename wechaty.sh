@@ -5,14 +5,15 @@
 
 export WECHATY_LOG="verbose"
 # wechaty-puppet-wechat
-export WECHATY_PUPPET="wechaty-puppet-wechat"
+export WECHATY_PUPPET="wechaty-puppet-padlocal"
+export WECHATY_PUPPET_PADLOCAL_TOKEN="puppet_padlocal_c18c00365fb64f0c8207a663e5bd6455"
 export WECHATY_PUPPET_SERVER_PORT="8080"
 export WECHATY_TOKEN="python-wechaty-97b5ee4f-f9bb-44d2-af1e-919b7d122539"
-export WECHATY_PUPPET_SERVICE_NO_TLS_INSECURE_SERVER="true"
+#export WECHATY_PUPPET_SERVICE_NO_TLS_INSECURE_SERVER="true"
 
 # save login session
 if [ ! -f "${WECHATY_TOKEN}.memory-card.json" ]; then
-touch "${WECHATY_TOKEN}.memory-card.json"
+  touch "${WECHATY_TOKEN}.memory-card.json"
 fi
 
 docker run -ti \
@@ -21,6 +22,7 @@ docker run -ti \
 -v "`pwd`/${WECHATY_TOKEN}.memory-card.json":"/wechaty/${WECHATY_TOKEN}.memory-card.json" \
 -e WECHATY_LOG \
 -e WECHATY_PUPPET \
+-e WECHATY_PUPPET_PADLOCAL_TOKEN \
 -e WECHATY_PUPPET_SERVER_PORT \
 -e WECHATY_PUPPET_SERVICE_NO_TLS_INSECURE_SERVER \
 -e WECHATY_TOKEN \
