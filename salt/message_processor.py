@@ -6,26 +6,23 @@ from salt.utils.text_cleaner import clean_text
 
 
 async def message_processor(msg: "Message"):
-    talker: Optional[Contact] = msg.talker()  # 始终会返回说话者的对象
-    # print(talker.name)
-    # print(talker.weixin())
-    # print(talker.contact_id)
-    # print(await talker.alias())
+    # talker: Optional[Contact] = msg.talker()  # 始终会返回说话者的对象
     room: Optional[Room] = msg.room()  # 私聊的时候这里为None
-    # for person in await room.member_list():
-    #     print(person.contact_id ,"-", person.weixin(), "-",person.name,"-", await person.alias())
     text: str = msg.text()  # 获取到信息
 
     is_mention_self = False
+    bot_room_name = await room.alias(msg.wechaty)
+    print(await msg.mention_text())
     if await msg.mention_self():
-        bot_room_name = await room.alias(msg.wechaty)
-        text.replace(f"@{bot_room_name}", "")
+        text = text.replace(f"@{bot_room_name} ", "")
         is_mention_self = True
-
+    elif f"@{bot_room_name} " in text:
+        text = text.replace(f"@{bot_room_name} ", "")
+        is_mention_self = True
     text = clean_text(text).strip()
     if not text:  # 理论上不可能, 因为不允许发送空消息
         return
-    print(text)
+    # print(text)
     message_to_me = False  # 检查是不是叫了名字
     for name in BOT_NAME:
         if text.startswith(name):
@@ -50,4 +47,4 @@ async def message_processor(msg: "Message"):
                     except Exception as e:
                         sf.service.logger.error(f"{type(e)} occurred when {sf.__name__} handling message {text}")
                         sf.service.logger.exception(e)
-            return  # 被一个类型的触发器handle了直接返回
+            # return  # 被一个类型的触发器handle了直接返回

@@ -1,4 +1,4 @@
-__version__ = '0.0.1'
+__version__ = '1.0.0-alpha'
 
 import asyncio
 from functools import wraps
@@ -15,7 +15,7 @@ from salt.message_processor import message_processor
 from salt.utils import init_utils
 import salt.priv as priv
 import importlib
-
+from salt.priv import refresh_all
 
 salt_bot: "SaltBot"
 logger = log.new_logger("salt_init")
@@ -42,14 +42,13 @@ def init() -> "SaltBot":
 
 class SaltBot(Wechaty):
 
-    async def on_login(self, contact: Contact) -> None:
-        pass
-        # from salt.priv import refresh_all
-        # await refresh_all(self)
+    # async def on_login(self, contact: Contact) -> None:
+    #     pass
+    #     from salt.priv import refresh_all
+    #     await refresh_all(self)
 
     async def on_ready(self, payload: EventReadyPayload) -> None:
-        from salt.priv import refresh_all
-        # await asyncio.sleep(5)
+
         await refresh_all(self)
 
     async def on_message(self, msg: Message):

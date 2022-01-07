@@ -7,8 +7,8 @@ from wechaty import Message, Contact, Room
 from collections import defaultdict
 from datetime import timedelta, datetime
 from wechaty_puppet import ContactQueryFilter
-
 from salt.config import SUPER_USER_LIST
+
 
 BLACK = -999
 PRIVATE = -10
@@ -28,8 +28,8 @@ _black_room_dict: Dict["Room", "datetime"] = {}
 """存放黑名单用户"""
 _black_user_dict: Dict["Contact", "datetime"] = {}
 
-"""用于存储所有管理权限的人, 储存方式为 [room对象: 管理员列表] 因为web版不具备获取群管理的能力, 所以必须每个群手动添加"""
-_admin_user_dict: Dict["Room", List["Contact"]] = defaultdict(list)
+"""用于存储所有管理权限的人, 储存方式为 [room名字: 管理员id列表] 因为web版不具备获取群管理的能力, 所以必须每个群手动添加"""
+_admin_user_dict: Dict[str, List[str]] = defaultdict(list)
 
 
 async def refresh_all(bot):
@@ -59,9 +59,9 @@ async def get_user_priv(event: "Message") -> int:
     room: "Room" = event.room()
     if talker in _superuser_list:  # 在超级管理员字典中返回SUPERUSER
         return SUPERUSER
-    elif await event.room().owner() == talker:
+    elif room is not None and await event.room().owner() == talker:
         return OWNER
-    elif room is not None and talker in _admin_user_dict[room]:  # 考虑到可能为私聊, 判断一下room是不是为None, 然后判断一下管理员组
+    elif room is not None and talker.contact_id in _admin_user_dict[await room.topic()]:  # 考虑到可能为私聊, 判断一下room是不是为None, 然后判断一下管理员组
         return ADMIN
     elif talker in _black_user_dict:  # 如果user对象在黑名单中, 返回BLACK
         return BLACK

@@ -36,7 +36,7 @@ class SchedulerTrigger:
     CronTrigger = "cron"
 
 
-def _load_service_config(sv_name: str):
+def _load_service_config(sv_name: str) -> dict:
     config_path = os.path.join(_config_dir, f'{sv_name}.json')
     if not os.path.exists(config_path):
         return {}
@@ -114,25 +114,49 @@ class Service:
         self.logger.info(f"Service {self.name} is enabled in Room {room_name}")
 
     async def disable_service(self, room: "Room"):
+        """
+
+        :param room:
+        :return:
+        """
         room_name = await room.topic()
         self.enabled_room.discard(room_name)
         self.disabled_room.add(room_name)
         _save_service_config(self)
         self.logger.info(f"Service {self.name} is disabled in Room {room_name}")
 
-    async def check_user_priv(self, event: "Message") -> bool:
-        return check_priv(await get_user_priv(event), self.user_priv)
+    async def check_user_priv(self, event: "Message", mention_user_if_fail=False) -> bool:
+        """
+        工具函数 - 检查用户使用该服务的权限
+        :param mention_user_if_fail: 如果为True的话权限不够的时候警告用户
+        :param event: 群聊的消息事件
+        :return: 如果权限足够返回True, 不够则返回False
+        """
+        user_priv = await get_user_priv(event)
+        ret_bool = check_priv(user_priv, self.user_priv)
+        if not ret_bool and mention_user_if_fail:
+            conversation = event.room() if event.room() is not None else event.talker()
+            await conversation.say(f"权限不足, 修改所需要的权限为{self.user_priv}, 而您的权限为{user_priv}")
+        return ret_bool
 
     async def check_admin_priv(self, event: "Message") -> bool:
+        """
+        工具函数 - 检查管理服务的权限
+        """
         return check_priv(await get_user_priv(event), self.manage_priv)
 
     async def check_service_enable(self, event: Union["Message", str]) -> bool:  # todo
         """
-        返回true如果服务开启, false如果服务关闭
+        通过群聊名检查服务是否开启, 返回true如果服务开启, false如果服务关闭
+        也可以检查私聊权限, 但是前提是传入是个事件消息对象(这个部分可能需要重构, 或许不应该传入str?)
         :param event:
         :return: 布尔值
         """
         if isinstance(event, Message):
+            if event.room() is None:  # 如果是私聊的话, 那就判断该服务是否允许私聊权限
+                if check_priv(self.user_priv, priv.PRIVATE):
+                    return True
+                return False
             room_name = await event.room().topic()
         elif isinstance(event, str):
             room_name = event
@@ -141,7 +165,7 @@ class Service:
         return (room_name in self.enabled_room) or (self.enable_on_default and room_name not in self.disabled_room)
 
     async def check_all_user_priv(self, event: "Message"):
-        return await self.check_user_priv(event) and not check_is_block_user(event.talker()) and \
+        return await self.check_user_priv(event, mention_user_if_fail=True) and not check_is_block_user(event.talker()) and \
                not check_is_block_room(event.room()) and await self.check_service_enable(event)
 
     @staticmethod

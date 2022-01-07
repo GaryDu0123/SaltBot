@@ -37,7 +37,7 @@ async def get_a(event: "Message", msg: str):
 
 @on_command("在?", "在吗?", "在？", only_to_me=True)
 async def zaima(event: "Message", msg: str):
-    conversation: Union[Room, Contact] = event.room()
+    conversation = event.room() if event.room() is not None else event.talker()
     await conversation.say('はい！私はいつも貴方の側にいますよ！')
 
 
