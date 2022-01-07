@@ -1,7 +1,7 @@
 import re
 import aiohttp
 from salt.service import Service
-from typing import Union
+from typing import Union, Coroutine
 from wechaty import Room, Contact, Message
 from salt.config import GOOGLE_TRANSLATE_API_KEY
 from urllib.parse import quote
