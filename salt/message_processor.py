@@ -5,32 +5,44 @@ from salt.config import BOT_NAME
 from salt.utils.text_cleaner import clean_text
 
 
+async def is_mention_self(msg: "Message") -> bool:
+    bot_room_name = await msg.room().alias(msg.wechaty)
+    if await msg.mention_self():
+        return True
+    elif f"@{bot_room_name} " in msg.text():
+        return True
+    return False
+
+
 async def message_processor(msg: "Message"):
     # talker: Optional[Contact] = msg.talker()  # 始终会返回说话者的对象
     room: Optional[Room] = msg.room()  # 私聊的时候这里为None
     text: str = msg.text()  # 获取到信息
 
-    is_mention_self = False
+    is_mention = False
     bot_room_name = await room.alias(msg.wechaty)
-    print(await msg.mention_text())
-    if await msg.mention_self():
+
+    # print(await msg.mention_text())
+
+    if await is_mention_self(msg):
         text = text.replace(f"@{bot_room_name} ", "")
-        is_mention_self = True
-    elif f"@{bot_room_name} " in text:
-        text = text.replace(f"@{bot_room_name} ", "")
-        is_mention_self = True
+        is_mention = True
+
     text = clean_text(text).strip()
+
     if not text:  # 理论上不可能, 因为不允许发送空消息
         return
-    # print(text)
+
     message_to_me = False  # 检查是不是叫了名字
     for name in BOT_NAME:
         if text.startswith(name):
             message_to_me = True
             text: str = text[len(name):].strip()  # 切去前缀(bot名字)
             break
+
     if not text:
         return
+
     for handler in handle_list:
         ret = handler.search_handler(text)  # 寻找触发器
         if len(ret) > 0:
@@ -40,7 +52,7 @@ async def message_processor(msg: "Message"):
                     continue
                 # 命令必须@(叫名字)触发->{only_to_me == True || 是否@bot } not True or后面必须为True
                 # 命令不是必须叫名字   ->{only_to_me == False} 永真式
-                if not sf.only_to_me or message_to_me or is_mention_self:
+                if not sf.only_to_me or message_to_me or is_mention:
                     try:
                         sf.service.logger.info(f"Message {text} handled by {sf.__name__}")
                         await sf.func(msg, text)

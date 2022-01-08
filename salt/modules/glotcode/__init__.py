@@ -16,7 +16,7 @@ language_list = {
     'c': ['c'],
     'clojure': ['clojure'],
     'cobol': ['cobol'],
-    'coffeescript': ['coffeescript'],
+    'coffeescript': ['coffeescript', 'coffee'],
     'cpp': ['cpp', 'c++'],
     'crystal': ['crystal'],
     'csharp': ['csharp', "c#"],
@@ -94,24 +94,26 @@ for key, value in language_list.items():
     for alias in value:
         search_dict[alias] = key
 
-sv = Service("CodeOnline", enable_on_default=True, _help="""
-
-
+sv = Service("CodeOnline", enable_on_default=True, _help=f"""
+命令格式 运行 语言名称 [-i stdin] 代码 
+目前支持语言: {"|".join(suffix_list.values())}
 """)
 
 
 @sv.on_prefix("运行", only_to_me=True)
 async def run_code(event: "Message", msg: str):
-    match_obj = re.match(r"^运行 *(?P<codeType>.+) *\n(?P<code>[\W\w]*)$", msg)
-    code_type = match_obj.group("codeType").strip()
-    code = match_obj.group("code").strip()
+    match_obj = re.match(r"^运行 *(?P<language_type>[^ \n]+) ?(-i *(?P<stdin>[^ \n]+))?[\n ]+(?P<code>[\w\W]+)", msg)
+    code_type = match_obj.group("language_type").strip()
+
     if code_type not in search_dict:
         await event.room().say(f"找不到{code_type}, 请检查你的输入")
         return
+    code = match_obj.group("code").strip()
     if len(code) == 0:
         await event.room().say(f"运行代码不能为空~")
         return
 
+    stdin = match_obj.group("stdin")  # 获取stdin的输入
     type_name = search_dict[code_type]
 
     header = {
@@ -121,10 +123,12 @@ async def run_code(event: "Message", msg: str):
     data = {
         "files": [
             {
-                'name': f'main.{suffix_list[type_name]}',
+                'name': f'main.{suffix_list[type_name]}',  # 固定文件名的话用户在处理java类文件的时候类名可能会不方便, 需要改进
                 'content': code
             }
-        ]
+        ],
+        "stdin": stdin if stdin is not None else "",
+        "command": ""
     }
     try:
         async with aiohttp.TCPConnector(ssl=False) as connector:

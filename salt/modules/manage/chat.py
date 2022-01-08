@@ -7,7 +7,7 @@ import random
 
 sv = Service("聊天", enable_on_default=True, _help="日常聊天模块")
 
-
+"""
 @sv.on_full_match("不需要提示", only_to_me=False)
 async def test(event: "Message", msg: str):
     conversation: Union[Room, Contact] = event.room()
@@ -18,6 +18,7 @@ async def test(event: "Message", msg: str):
 async def test2(event: "Message", msg: str):
     conversation: Union[Room, Contact] = event.room()
     await conversation.say("这是需要mention的信息")
+"""
 
 
 @sv.on_keyword("yysy", "有一说一", "确实")

@@ -1,10 +1,9 @@
 __version__ = '1.0.0-alpha'
 
-import asyncio
 from functools import wraps
 
 from wechaty_puppet import FileBox, ContactQueryFilter, EventReadyPayload  # type: ignore
-from wechaty import Wechaty, Contact
+from wechaty import Wechaty
 from wechaty.user import Message
 import salt.config
 from salt import log
@@ -42,16 +41,14 @@ def init() -> "SaltBot":
 
 class SaltBot(Wechaty):
 
-    # async def on_login(self, contact: Contact) -> None:
-    #     pass
-    #     from salt.priv import refresh_all
-    #     await refresh_all(self)
+    on_ready_once = True  # 解决on_ready事件会调用两次的bug,等待wechaty开发者修复
 
     async def on_ready(self, payload: EventReadyPayload) -> None:
+        if SaltBot.on_ready_once:
+            await refresh_all(self)
+            SaltBot.on_ready_once = False
 
-        await refresh_all(self)
-
-    async def on_message(self, msg: Message):
+    async def on_message(self, msg: Message) -> None:
         """
         listen for message event
         """

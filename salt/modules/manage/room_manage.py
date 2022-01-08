@@ -1,17 +1,12 @@
 #!/usr/bin/env python
 # -*-coding:utf-8 -*-
 import os
-from typing import Dict, List
-from wechaty import Room, Message, Contact
-
+from wechaty import Message
 import salt
 from salt import on_command, config
-from salt.priv import check_priv, get_user_priv
-# from collections import defaultdict
 import salt.priv as priv
 from salt.priv import _admin_user_dict
 from salt.service import Service
-from wechaty_puppet import ContactQueryFilter, RoomMemberQueryFilter
 
 try:
     import ujson as json
@@ -21,7 +16,6 @@ except ImportError:
 sv = Service("__room__manage__", enable_on_default=True, visible=False,
              user_priv=priv.OWNER, manage_priv=priv.SUPERUSER)
 
-# _admin_user_dict: Dict[str, List[str]] = defaultdict(list)
 _config_dir = os.path.expanduser(f'{config.CONFIG_DIR}/room_config/'
                                  if config.CONFIG_DIR is not None else
                                  "~/.SaltBot/room_config/")
@@ -77,7 +71,7 @@ async def add_admin(event: "Message", msg: str):
     is_changed = False  # 记录本次更改是否改变了管理员的设置的flag
     room_topic: str = await room.topic()
     failed_list = []
-    for person in mention_list:  # todo 暂时还是使用群聊名做记录吧, 还是担心id可能会变
+    for person in mention_list:  # todo 暂时还是使用群聊名做记录吧, 还是担心room id可能会变
         if person.contact_id not in _admin_user_dict[room_topic]:
             is_changed = True
             _admin_user_dict[room_topic].append(person.contact_id)
@@ -89,12 +83,13 @@ async def add_admin(event: "Message", msg: str):
         _update_room_admin_json()
 
 
-@sv.on_full_match("删除管理员", only_to_me=True)
+@sv.on_prefix("删除管理员", only_to_me=True)  # todo 如果有人退群, 便无法使用@删除了, 但是担心@与id的混用问题, 先搁置吧
 async def del_admin(event: "Message", msg: str):
     room = event.room()
     if room is None:
         await event.talker().say("请在群聊内使用该命令")
         return
+
     # user_priv = await get_user_priv(event)
     # if not check_priv(user_priv, priv.OWNER):
     #     await event.room().say(f"权限不足, 修改所需要的权限为{priv.OWNER}, 而您的权限为{user_priv}")
@@ -128,4 +123,7 @@ async def admin_list(event: "Message", msg: str):
     room_admin_list = _admin_user_dict[await room.topic()]
     # for contact_id in room_admin_list:
     #     await room.find(RoomMemberQueryFilter())
+    if not room_admin_list:
+        await room.say("本群还未设置Bot管理员")
+        return
     await room.say("本群Bot管理员为\n" + "\n".join(room_admin_list))
